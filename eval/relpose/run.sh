@@ -2,6 +2,7 @@
 set -e
 
 workdir='.'
+export STREAM3R_DATA_ROOT="${STREAM3R_DATA_ROOT:-/media/boe/HDD_1/data}"
 
 datasets=('tum' 'sintel' 'scannet')
 model_name='stream3r'
@@ -13,5 +14,4 @@ for data in "${datasets[@]}"; do
         --output_dir "$output_dir/" \
         --eval_dataset "$data"
 done
-
 

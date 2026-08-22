@@ -67,6 +67,18 @@ def get_args_parser():
                         default=False,
                         help="whether to use all seqs")
     parser.add_argument("--seq_list", default=None)
+    parser.add_argument(
+        "--model_path",
+        type=str,
+        default="yslan/STream3R",
+        help="Hugging Face model id or local snapshot directory",
+    )
+    parser.add_argument(
+        "--mode",
+        choices=("window", "full"),
+        default="window",
+        help="attention mode used during inference",
+    )
 
     parser.add_argument("--eval_dataset",
                         type=str,
@@ -110,7 +122,7 @@ def eval_mono_depth(args, model, device, filelist, save_dir=None):
         images = ImgDust3r2Stream3r(images).to(device)
 
         with torch.no_grad():
-            predictions = model(images)
+            predictions = model(images, mode=args.mode)
 
         depth_map = predictions['depth'][0,0].squeeze(-1).cpu()
 
@@ -136,7 +148,7 @@ def main():
     else:
         args.full_seq = False
 
-    model = STream3R.from_pretrained("yslan/STream3R").to(args.device)
+    model = STream3R.from_pretrained(args.model_path).to(args.device)
     model.eval()
 
     eval_mono_depth_estimation(args, model, args.device)

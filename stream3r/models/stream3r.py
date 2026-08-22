@@ -63,7 +63,14 @@ class STream3R(nn.Module, PyTorchModelHubMixin):
                 - world_points_conf (torch.Tensor): Confidence scores for world points with shape [B, S, H, W]
                 - images (torch.Tensor): Original input images, preserved for visualization
         """
-        if self.training:
+        # Official implementation (disabled): validation also supplies a list
+        # of view dictionaries, but self.training is False during validation.
+        # if self.training:
+        #     images = torch.stack([view["img"] for view in images], dim=1)
+        #     images = (images + 1.) / 2.
+
+        input_is_views = isinstance(images, (list, tuple))
+        if input_is_views:
             images = torch.stack([view["img"] for view in images], dim=1)
             images = (images + 1.) / 2.
 
@@ -83,9 +90,14 @@ class STream3R(nn.Module, PyTorchModelHubMixin):
                 if camera_head_kv_cache_list is not None:
                     pose_enc_list, camera_head_kv_cache_list = self.camera_head(aggregated_tokens_list, mode=mode, kv_cache_list=camera_head_kv_cache_list)
                 else:
+
                     pose_enc_list = self.camera_head(aggregated_tokens_list, mode=mode)
                 predictions["pose_enc"] = pose_enc_list[-1]  # pose encoding of the last iteration
-                if self.training:
+                # Official implementation (disabled): CausalLoss also needs
+                # pose_enc_list while the model is in validation/eval mode.
+                # if self.training:
+                #     predictions["pose_enc_list"] = pose_enc_list
+                if self.training or input_is_views:
                     predictions["pose_enc_list"] = pose_enc_list
 
             if self.point_head is not None:

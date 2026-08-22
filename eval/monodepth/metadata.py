@@ -2,15 +2,17 @@ import os
 import glob
 from tqdm import tqdm
 
+DATA_ROOT = os.environ.get("STREAM3R_DATA_ROOT", "data")
+
 # Define the merged dataset metadata dictionary
 dataset_metadata = {
     "sun_rgbd": {
-        "img_path": "data/sun_rgbd/image/test",
+        "img_path": os.path.join(DATA_ROOT, "sun_rgbd/image/test"),
         "mask_path": None,
     },
     "davis": {
-        "img_path": "data/davis/DAVIS/JPEGImages/480p",
-        "mask_path": "data/davis/DAVIS/masked_images/480p",
+        "img_path": os.path.join(DATA_ROOT, "davis/DAVIS/JPEGImages/480p"),
+        "mask_path": os.path.join(DATA_ROOT, "davis/DAVIS/masked_images/480p"),
         "dir_path_func": lambda img_path, seq: os.path.join(img_path, seq),
         "gt_traj_func": lambda img_path, anno_path, seq: None,
         "traj_format": None,
@@ -21,7 +23,7 @@ dataset_metadata = {
         "process_func": None,  # Not used in mono depth estimation
     },
     "kitti": {
-        "img_path": "data/kitti/depth_selection/val_selection_cropped/image_gathered",  # Default path
+        "img_path": os.path.join(DATA_ROOT, "kitti/depth_selection/val_selection_cropped/image_gathered"),  # Default path
         "mask_path": None,
         "dir_path_func": lambda img_path, seq: os.path.join(img_path, seq),
         "gt_traj_func": lambda img_path, anno_path, seq: None,
@@ -33,7 +35,7 @@ dataset_metadata = {
         "process_func": lambda args, img_path: process_kitti(args, img_path),
     },
     "bonn": {
-        "img_path": "data/bonn/rgbd_bonn_dataset",
+        "img_path": os.path.join(DATA_ROOT, "bonn/rgbd_bonn_dataset"),
         "mask_path": None,
         "dir_path_func": lambda img_path, seq: os.path.join(
             img_path, f"rgbd_bonn_{seq}", "rgb_110"
@@ -49,12 +51,12 @@ dataset_metadata = {
         "process_func": lambda args, img_path: process_bonn(args, img_path),
     },
     "nyu": {
-        "img_path": "data/nyu-v2/val/nyu_images",
+        "img_path": os.path.join(DATA_ROOT, "nyu-v2/val/nyu_images"),
         "mask_path": None,
         "process_func": lambda args, img_path: process_nyu(args, img_path),
     },
     "scannet": {
-        "img_path": "data/scannetv2",
+        "img_path": os.path.join(DATA_ROOT, "scannetv2"),
         "mask_path": None,
         "dir_path_func": lambda img_path, seq: os.path.join(img_path, seq, "color_90"),
         "gt_traj_func": lambda img_path, anno_path, seq: os.path.join(
@@ -68,7 +70,7 @@ dataset_metadata = {
         "process_func": lambda args, img_path: process_scannet(args, img_path),
     },
     "tum": {
-        "img_path": "data/tum",
+        "img_path": os.path.join(DATA_ROOT, "tum"),
         "mask_path": None,
         "dir_path_func": lambda img_path, seq: os.path.join(img_path, seq, "rgb_90"),
         "gt_traj_func": lambda img_path, anno_path, seq: os.path.join(
@@ -82,8 +84,8 @@ dataset_metadata = {
         "process_func": None,
     },
     "sintel": {
-        "img_path": "data/sintel/training/final",
-        "anno_path": "data/sintel/training/camdata_left",
+        "img_path": os.path.join(DATA_ROOT, "sintel/training/final"),
+        "anno_path": os.path.join(DATA_ROOT, "sintel/training/camdata_left"),
         "mask_path": None,
         "dir_path_func": lambda img_path, seq: os.path.join(img_path, seq),
         "gt_traj_func": lambda img_path, anno_path, seq: os.path.join(anno_path, seq),

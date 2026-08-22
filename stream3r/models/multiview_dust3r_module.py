@@ -73,6 +73,7 @@ class MultiViewDUSt3RLitModule(LightningModule):
 
         self.train_total_samples_per_step = AccumulatedSum()  # these need to be reduced across GPUs, so use Metric
         self.train_total_images_per_step = AccumulatedSum()  # these need to be reduced across GPUs, so use Metric
+        self._train_step_losses: List[float] = []
 
         self.val_loss = MeanMetric()
 
@@ -112,6 +113,8 @@ class MultiViewDUSt3RLitModule(LightningModule):
                 self.wandb_logger.watch(self.net, log="all", log_freq=500, log_graph=False)
 
     def on_train_epoch_start(self) -> None:
+        self._train_step_losses.clear()
+
         # save initial checkpoint to check pretrained model
         # if self.trainer.global_step == 0:
         #     checkpoint_path = os.path.join(self.trainer.checkpoint_callback.dirpath, "step_0.ckpt")
@@ -169,6 +172,9 @@ class MultiViewDUSt3RLitModule(LightningModule):
             loss = None  # set loss to None will still break the training loop in DDP, this is intended - we should fix the data to avoid nan loss in the first place
             return loss
 
+        if isinstance(loss, torch.Tensor) and loss.numel() == 1:
+            self._train_step_losses.append(loss.detach().float().cpu().item())
+
         self.epoch_fraction = torch.tensor(self.trainer.current_epoch + batch_idx / self.trainer.num_training_batches, device=self.device)
 
         self.log("trainer/epoch", self.epoch_fraction, on_step=True, on_epoch=False, prog_bar=True)
@@ -200,6 +206,35 @@ class MultiViewDUSt3RLitModule(LightningModule):
         self.log("trainer/total_images", self.train_total_images, on_step=True, on_epoch=False, prog_bar=False)
 
         return loss
+
+    def on_train_epoch_end(self) -> None:
+        gathered_losses = [self._train_step_losses]
+        if torch.distributed.is_available() and torch.distributed.is_initialized():
+            gathered_losses = [None] * torch.distributed.get_world_size()
+            all_gather_object(gathered_losses, self._train_step_losses)
+
+        step_losses = np.asarray(
+            [loss for rank_losses in gathered_losses for loss in rank_losses],
+            dtype=np.float64,
+        )
+        if step_losses.size == 0:
+            return
+
+        epoch_statistics = {
+            "train/loss_epoch_mean": np.mean(step_losses),
+            "train/loss_epoch_median": np.median(step_losses),
+            "train/loss_epoch_variance": np.var(step_losses),
+            "train/loss_epoch_p90": np.quantile(step_losses, 0.9),
+        }
+        for name, value in epoch_statistics.items():
+            self.log(
+                name,
+                torch.tensor(value, device=self.device, dtype=torch.float32),
+                on_step=False,
+                on_epoch=True,
+                prog_bar=name == "train/loss_epoch_mean",
+                sync_dist=False,
+            )
 
     def validation_step(
         self, batch: List[Dict[str, torch.Tensor]], batch_idx: int, dataloader_idx: int = 0,

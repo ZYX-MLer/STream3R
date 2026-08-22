@@ -14,6 +14,7 @@ from torch.utils.data._utils.collate import default_collate
 from tqdm import tqdm
 
 from stream3r.models.stream3r import STream3R
+from stream3r.stream_session import StreamSession
 from stream3r.dust3r.utils.geometry import geotrf
 from stream3r.models.components.utils.geometry import unproject_depth_map_to_point_map
 from stream3r.models.components.utils.pose_enc import pose_encoding_to_extri_intri
@@ -59,10 +60,23 @@ def get_args_parser():
     parser.add_argument("--size", type=int, default=512)
     parser.add_argument("--revisit", type=int, default=1, help="revisit times")
     parser.add_argument("--freeze", action="store_true")
+    parser.add_argument(
+        "--model_path",
+        type=str,
+        default="yslan/STream3R",
+        help="Hugging Face model id or local snapshot directory",
+    )
+    parser.add_argument(
+        "--mode",
+        choices=("window", "full"),
+        default="window",
+        help="attention mode used during inference",
+    )
     return parser
 
 
 def main(args):
+    data_root = os.environ.get("STREAM3R_DATA_ROOT", "data")
     if args.size == 518:
         resolution = (518, 392)
     elif args.size == 512:
@@ -76,7 +90,7 @@ def main(args):
         "7scenes":
         SevenScenes(
             split="test",
-            ROOT="./data/7scenes",
+            ROOT=os.path.join(data_root, "7scenes"),
             resolution=resolution,
             num_seq=1,
             full_video=True,
@@ -85,7 +99,7 @@ def main(args):
         "NRGBD":
         NRGBD(
             split="test",
-            ROOT="./data/neural_rgbd",
+            ROOT=os.path.join(data_root, "neural_rgbd"),
             resolution=resolution,
             num_seq=1,
             full_video=True,
@@ -98,7 +112,7 @@ def main(args):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    model = STream3R.from_pretrained("yslan/STream3R").to(device)
+    model = STream3R.from_pretrained(args.model_path).to(device)
     model.eval()
     
     os.makedirs(args.output_dir, exist_ok=True)
@@ -183,7 +197,14 @@ def main(args):
                         images = ImgDust3r2Stream3r(images).to(device)
 
                         with torch.no_grad():
-                            predictions = model(images)
+                            if args.mode == "window":
+                                session = StreamSession(model, mode="window")
+                                for image_idx in range(images.shape[0]):
+                                    predictions = session.forward_stream(
+                                        images[image_idx:image_idx + 1]
+                                    )
+                            else:
+                                predictions = model(images, mode="full")
                         
                         extrinsic, intrinsic = pose_encoding_to_extri_intri(predictions["pose_enc"], predictions["images"].shape[-2:])
                         world_points_from_depth = unproject_depth_map_to_point_map(

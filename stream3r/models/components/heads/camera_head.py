@@ -79,6 +79,9 @@ class CameraHead(nn.Module):
         )
 
     def _create_attn_mask(self, S: int, mode: str, dtype: torch.dtype, device: torch.device) -> torch.Tensor:
+        if mode == "full":
+            return None
+
         N = S
         mask = torch.zeros((N, N), dtype=dtype, device=device)
         
@@ -95,9 +98,7 @@ class CameraHead(nn.Module):
                 mask[curr_view_start:curr_view_end, 1:] = float('-inf')
                 start_view = max(1, i - window_size + 1)
                 mask[curr_view_start:curr_view_end, start_view:(i+1)] = 0
-        elif mode == "full":
-            mask = None
-        else:
+        elif mode != "window":
             raise NotImplementedError(f"Unknown attention mode: {mode}")
 
         return mask

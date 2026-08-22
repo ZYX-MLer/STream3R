@@ -160,6 +160,9 @@ class STreamAggregator(nn.Module):
                 self.patch_embed.mask_token.requires_grad_(False)
     
     def _create_attn_mask(self, S: int, P: int, mode: str, dtype: torch.dtype, device: torch.device) -> torch.Tensor:
+        if mode == "full":
+            return None
+
         N = S * P
         mask = torch.zeros((N, N), dtype=dtype, device=device)
         
@@ -176,9 +179,7 @@ class STreamAggregator(nn.Module):
                 mask[curr_view_start:curr_view_end, P:] = float('-inf')
                 start_view = max(1, i - window_size + 1)
                 mask[curr_view_start:curr_view_end, start_view*P:(i+1)*P] = 0
-        elif mode == "full":
-            mask = None
-        else:
+        elif mode != "window":
             raise NotImplementedError(f"Unknown attention mode: {mode}")
 
         return mask

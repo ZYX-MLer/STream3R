@@ -2,6 +2,7 @@
 set -e
 
 workdir='.'
+export STREAM3R_DATA_ROOT="${STREAM3R_DATA_ROOT:-/media/boe/HDD_1/data}"
 
 datasets=('sintel' 'bonn' 'kitti')
 model_name='stream3r'

@@ -5,6 +5,11 @@ from pathlib import Path
 
 import evo.main_ape as main_ape
 import evo.main_rpe as main_rpe
+from evo.tools.settings import SETTINGS
+
+if not os.environ.get("DISPLAY"):
+    SETTINGS.plot_backend = "Agg"
+
 import matplotlib.pyplot as plt
 import numpy as np
 from evo.core import sync

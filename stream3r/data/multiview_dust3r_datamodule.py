@@ -139,8 +139,7 @@ class MultiViewDUSt3RDataModule(LightningDataModule):
         # Create individual validation data loaders for each dataset
         val_loaders = []
         for dataset in val_datasets:
-            dataset.set_ratio(1.0)  # FIXME: Check if this is correct # the spann3r datasets have a set_ratio method
-
+            # dataset.set_ratio(1.0)  # FIXME: Check if this is correct # the spann3r datasets have a set_ratio method
             batch_size = self.batch_size_per_device_val
 
             val_loaders.append(

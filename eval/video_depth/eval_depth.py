@@ -35,6 +35,7 @@ def get_args_parser():
 
 
 def main(args):
+    data_root = os.environ.get("STREAM3R_DATA_ROOT", "data")
     if args.eval_dataset == "sintel":
         TAG_FLOAT = 202021.25
 
@@ -69,7 +70,7 @@ def main(args):
             full = False
 
         if full:
-            depth_pathes = glob.glob(f"data/sintel/training/depth/*/*.dpt")
+            depth_pathes = glob.glob(os.path.join(data_root, "sintel/training/depth/*/*.dpt"))
             depth_pathes = sorted(depth_pathes)
         else:
             seq_list = [
@@ -89,7 +90,7 @@ def main(args):
                 "temple_3",
             ]
             depth_pathes_folder = [
-                f"data/sintel/training/depth/{seq}" for seq in seq_list
+                os.path.join(data_root, "sintel/training/depth", seq) for seq in seq_list
             ]
             depth_pathes = []
             for depth_pathes_folder_i in depth_pathes_folder:
@@ -187,7 +188,7 @@ def main(args):
         seq_list = ["balloon2", "crowd2", "crowd3", "person_tracking2", "synchronous"]
 
         img_pathes_folder = [
-            f"data/bonn/rgbd_bonn_dataset/rgbd_bonn_{seq}/rgb_110/*.png"
+            os.path.join(data_root, f"bonn/rgbd_bonn_dataset/rgbd_bonn_{seq}/rgb_110/*.png")
             for seq in seq_list
         ]
         img_pathes = []
@@ -195,7 +196,7 @@ def main(args):
             img_pathes += glob.glob(img_pathes_folder_i)
         img_pathes = sorted(img_pathes)
         depth_pathes_folder = [
-            f"data/bonn/rgbd_bonn_dataset/rgbd_bonn_{seq}/depth_110/*.png"
+            os.path.join(data_root, f"bonn/rgbd_bonn_dataset/rgbd_bonn_{seq}/depth_110/*.png")
             for seq in seq_list
         ]
         depth_pathes = []
@@ -298,7 +299,7 @@ def main(args):
             return depth
 
         depth_pathes = glob.glob(
-            "data/kitti/depth_selection/val_selection_cropped/groundtruth_depth_gathered/*/*.png"
+            os.path.join(data_root, "kitti/depth_selection/val_selection_cropped/groundtruth_depth_gathered/*/*.png")
         )
         depth_pathes = sorted(depth_pathes)
         pred_pathes = glob.glob(

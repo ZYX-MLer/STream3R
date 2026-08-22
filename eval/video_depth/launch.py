@@ -114,6 +114,18 @@ def get_args_parser():
         default="",
         help="path to the checkpoint directory",
     )
+    parser.add_argument(
+        "--model_path",
+        type=str,
+        default="yslan/STream3R",
+        help="Hugging Face model id or local snapshot directory",
+    )
+    parser.add_argument(
+        "--mode",
+        choices=("window", "full"),
+        default="window",
+        help="attention mode used during inference",
+    )
     return parser
 
 
@@ -193,10 +205,13 @@ def eval_pose_estimation_dist(args,
                 images = ImgDust3r2Stream3r(images).to(device)
 
                 with torch.no_grad():
-                    session = StreamSession(model, mode="causal")
-                    for i in range(images.shape[1]):
-                        image = images[:, i:i+1]
-                        predictions = session.forward_stream(image)
+                    if args.mode == "window":
+                        session = StreamSession(model, mode="window")
+                        for i in range(images.shape[1]):
+                            image = images[:, i:i+1]
+                            predictions = session.forward_stream(image)
+                    else:
+                        predictions = model(images, mode="full")
 
                 print(
                     f"Finished depth estmation of {len(filelist)} images"
@@ -239,7 +254,7 @@ def main():
         args.full_seq = False
     args.no_crop = True
 
-    model = STream3R.from_pretrained("yslan/STream3R").to(args.device)
+    model = STream3R.from_pretrained(args.model_path).to(args.device)
     model.eval()
 
     eval_pose_estimation(args, model, save_dir=args.output_dir)
