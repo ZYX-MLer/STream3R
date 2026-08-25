@@ -19,6 +19,7 @@ from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from stream3r.dust3r.model import FlashDUSt3R
 from stream3r.models.stream3r import STream3R
 from stream3r.utils import pylogger
+from models.StreamOmega import StreamOmega
 
 log = pylogger.RankedLogger(__name__, rank_zero_only=True)
 
@@ -351,8 +352,8 @@ class MultiViewDUSt3RLitModule(LightningModule):
             ckpt = self._update_ckpt_keys(ckpt, new_head_name='downstream_head', head_to_keep='downstream_head1', head_to_discard='downstream_head2')
             self.net.load_state_dict(ckpt["model"], strict=False)
             del ckpt  # in case it occupies memory
-        elif isinstance(self.net, STream3R):
-            # if the checkpoint is also STream3R, load all weights
+        elif isinstance(self.net, (STream3R, StreamOmega)):
+            # STream3R and StreamOmega checkpoints are raw model state dictionaries.
             log.info(f"Loading pretrained weights from {self.pretrained}")
             checkpoint = torch.load(self.pretrained)
             missing_keys, unexpected_keys = self.net.load_state_dict(checkpoint, strict=False)

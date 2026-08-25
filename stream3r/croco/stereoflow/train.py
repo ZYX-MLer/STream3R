@@ -25,9 +25,9 @@ import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 import utils
 import utils.misc as misc
-from models.croco_downstream import CroCoDownstreamBinocular, croco_args_from_ckpt
-from models.head_downstream import PixelwiseTaskWithDPT
-from models.pos_embed import interpolate_pos_embed
+from streamomega.croco_downstream import CroCoDownstreamBinocular, croco_args_from_ckpt
+from streamomega.head_downstream import PixelwiseTaskWithDPT
+from streamomega.pos_embed import interpolate_pos_embed
 from stereoflow.criterion import FlowMetrics, StereoMetrics
 from stereoflow.datasets_flow import get_test_datasets_flow, get_train_dataset_flow
 from stereoflow.datasets_stereo import (

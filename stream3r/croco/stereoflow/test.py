@@ -18,8 +18,8 @@ import pickle
 import numpy as np
 import torch
 import utils.misc as misc
-from models.croco_downstream import CroCoDownstreamBinocular
-from models.head_downstream import PixelwiseTaskWithDPT
+from streamomega.croco_downstream import CroCoDownstreamBinocular
+from streamomega.head_downstream import PixelwiseTaskWithDPT
 from PIL import Image
 from stereoflow.criterion import FlowDatasetMetrics, StereoDatasetMetrics
 from stereoflow.datasets_flow import flowToColor, get_test_datasets_flow
